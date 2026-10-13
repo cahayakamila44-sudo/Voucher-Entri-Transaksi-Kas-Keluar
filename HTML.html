@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Voucher Kas Keluar - Sistem Informasi Akuntansi</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="STYLE.css">
+
+    <!-- Google Font -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+    <!-- =========================
+         HEADER
+    ========================== -->
+    <header class="header">
+        <div class="header-container">
+
+            <div class="brand">
+                <div class="logo">SIA</div>
+
+                <div>
+                    <h1>Sistem Akuntansi Keuangan</h1>
+                    <p>Voucher Entri Transaksi Kas Keluar</p>
+                </div>
+            </div>
+
+            <div
+                id="connection-status"
+                class="connection-status status-loading"
+            >
+                <span class="status-dot"></span>
+                Menghubungkan Supabase...
+            </div>
+
+        </div>
+    </header>
+
+
+    <!-- =========================
+         MAIN
+    ========================== -->
+    <main class="main-container">
+
+
+        <!-- =========================
+             KONFIGURASI SUPABASE
+        ========================== -->
+        <section id="config-card" class="card config-card">
+
+            <h2>Konfigurasi Koneksi Supabase</h2>
+
+            <p class="description">
+                Masukkan Project URL dan Anon/Publishable Key Supabase
+                untuk menghubungkan aplikasi dengan PostgreSQL.
+            </p>
+
+            <div class="config-grid">
+
+                <div class="form-group">
+                    <label for="input-supabase-url">
+                        SUPABASE URL
+                    </label>
+
+                    <input
+                        type="text"
+                        id="input-supabase-url"
+                        placeholder="https://project-id.supabase.co"
+                    >
+                </div>
+
+
+                <div class="form-group">
+                    <label for="input-supabase-key">
+                        SUPABASE ANON / PUBLISHABLE KEY
+                    </label>
+
+                    <input
+                        type="password"
+                        id="input-supabase-key"
+                        placeholder="Masukkan anon/publishable key"
+                    >
+                </div>
+
+            </div>
+
+
+            <div class="config-button-container">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    onclick="saveSupabaseConfig()"
+                >
+                    Simpan & Hubungkan Database
+                </button>
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             NOTIFIKASI
+        ========================== -->
+        <div id="notification" class="notification hidden"></div>
+
+
+        <!-- =========================
+             FORM VOUCHER
+        ========================== -->
+        <section class="card voucher-card">
+
+            <div class="card-header">
+
+                <div>
+                    <h2>Form Voucher Kas Keluar</h2>
+                    <p>Entri transaksi jurnal kas keluar</p>
+                </div>
+
+                <span class="entry-status">
+                    Status: Entri Baru
+                </span>
+
+            </div>
+
+
+            <form id="voucher-form">
+
+
+                <!-- =========================
+                     HEADER TRANSAKSI
+                ========================== -->
+                <div class="transaction-grid">
+
+                    <div class="form-group">
+
+                        <label for="trx_date">
+                            Tanggal Transaksi (trx_date) *
+                        </label>
+
+                        <input
+                            type="date"
+                            id="trx_date"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="ref_no">
+                            Nomor Referensi (ref_no) *
+                        </label>
+
+                        <input
+                            type="text"
+                            id="ref_no"
+                            placeholder="Contoh: BKK-2026-001"
+                            required
+                        >
+
+                    </div>
+
+
+                    <div class="form-group">
+
+                        <label for="description">
+                            Deskripsi Transaksi (description) *
+                        </label>
+
+                        <input
+                            type="text"
+                            id="description"
+                            placeholder="Contoh: Pembayaran beban listrik"
+                            required
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================
+                     DETAIL JURNAL
+                ========================== -->
+                <div class="journal-section">
+
+                    <div class="section-header">
+
+                        <div>
+                            <h3>Detail Jurnal Transaksi</h3>
+
+                            <p>
+                                Pilih akun dari Chart of Accounts
+                                dan masukkan nilai debit atau kredit.
+                            </p>
+                        </div>
+
+
+                        <button
+                            type="button"
+                            class="btn btn-secondary"
+                            onclick="addJournalRow()"
+                        >
+                            + Tambah Baris Jurnal
+                        </button>
+
+                    </div>
+
+
+                    <!-- TABEL JURNAL -->
+                    <div class="table-container">
+
+                        <table>
+
+                            <thead>
+
+                                <tr>
+                                    <th>Akun (chart_of_accounts)</th>
+                                    <th>Debit (Rp)</th>
+                                    <th>Kredit (Rp)</th>
+                                    <th>Aksi</th>
+                                </tr>
+
+                            </thead>
+
+
+                            <tbody id="journal-lines-container">
+
+                                <!--
+                                Baris jurnal akan dibuat
+                                secara otomatis oleh JavaScript.
+                                -->
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =========================
+                     TOTAL
+                ========================== -->
+                <div class="summary-container">
+
+                    <div class="summary-values">
+
+                        <div class="summary-item">
+                            <span>Total Debit</span>
+
+                            <strong id="display-total-debit">
+                                Rp 0
+                            </strong>
+                        </div>
+
+
+                        <div class="summary-item">
+                            <span>Total Kredit</span>
+
+                            <strong id="display-total-kredit">
+                                Rp 0
+                            </strong>
+                        </div>
+
+
+                        <div class="summary-item">
+                            <span>Selisih</span>
+
+                            <strong id="display-selisih">
+                                Rp 0
+                            </strong>
+                        </div>
+
+                    </div>
+
+
+                    <div class="posting-container">
+
+                        <div
+                            id="balance-indicator"
+                            class="balance-indicator not-balanced"
+                        >
+                            TIDAK BALANCE
+                        </div>
+
+
+                        <button
+                            type="submit"
+                            id="btn-submit"
+                            class="btn btn-submit"
+                            disabled
+                        >
+                            Simpan & Posting
+                        </button>
+
+                    </div>
+
+                </div>
+
+            </form>
+
+        </section>
+
+    </main>
+
+
+    <!-- =========================
+         FOOTER
+    ========================== -->
+    <footer>
+
+        Sistem Akuntansi Terintegrasi •
+        Supabase PostgreSQL Backend
+
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="SCRIPT.js"></script>
+
+</body>
+
+</html>
